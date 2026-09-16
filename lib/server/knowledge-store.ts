@@ -2,7 +2,11 @@ import "server-only";
 
 import { randomUUID } from "node:crypto";
 import { createSeedKnowledge } from "@/lib/knowledge/seed";
-import type { KnowledgeEntry, KnowledgeInput } from "@/lib/knowledge/types";
+import type {
+  KnowledgeCreateInput,
+  KnowledgeEntry,
+  KnowledgeInput,
+} from "@/lib/knowledge/types";
 
 declare global {
   var __askMeKnowledgeStore: KnowledgeEntry[] | undefined;
@@ -27,7 +31,7 @@ export function getAllKnowledgeForAdmin(): KnowledgeEntry[] {
     .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
 }
 
-export function createKnowledge(input: KnowledgeInput): KnowledgeEntry {
+export function createKnowledge(input: KnowledgeCreateInput): KnowledgeEntry {
   const now = new Date().toISOString();
   const entry: KnowledgeEntry = {
     id: randomUUID(),

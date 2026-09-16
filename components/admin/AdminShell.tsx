@@ -16,6 +16,8 @@ export function AdminShell({ initialEntries }: { initialEntries: KnowledgeEntry[
   const [entries, setEntries] = useState(initialEntries);
   const [form, setForm] = useState<KnowledgeInput>(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [outlookQuery, setOutlookQuery] = useState("financial agentic");
+  const [outlookStatus, setOutlookStatus] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -33,6 +35,39 @@ export function AdminShell({ initialEntries }: { initialEntries: KnowledgeEntry[
       published: entry.published,
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  async function importFromOutlook(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setBusy(true);
+    setError("");
+    setOutlookStatus("");
+
+    try {
+      const response = await fetch("/api/admin/outlook/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: outlookQuery }),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error?.message || "Unable to import Outlook knowledge.");
+
+      const imported = payload.entries as KnowledgeEntry[];
+      if (imported.length > 0) {
+        setEntries((current) => [...imported, ...current]);
+        setOutlookStatus(
+          `${imported.length} unpublished candidate${imported.length === 1 ? "" : "s"} added for review.`,
+        );
+      } else if (payload.duplicatesSkipped > 0) {
+        setOutlookStatus("Matching Outlook candidates are already in the knowledge list.");
+      } else {
+        setOutlookStatus("No staged Outlook knowledge matched that topic.");
+      }
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Unable to import Outlook knowledge.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function save(event: FormEvent<HTMLFormElement>) {
@@ -128,6 +163,32 @@ export function AdminShell({ initialEntries }: { initialEntries: KnowledgeEntry[
           restarts and may differ between deployed instances; seeded knowledge always reloads.
         </aside>
 
+        <form className="admin-form" onSubmit={importFromOutlook}>
+          <div className="section-heading">
+            <div>
+              <h2>Import from Outlook</h2>
+              <p>
+                Search the private candidate staging set created from bounded Outlook retrieval.
+                Every imported candidate starts unpublished and requires explicit review.
+              </p>
+            </div>
+          </div>
+          <label>
+            Search/topic
+            <input
+              value={outlookQuery}
+              onChange={(event) => setOutlookQuery(event.target.value)}
+              maxLength={120}
+              placeholder="agentic AI"
+              required
+            />
+          </label>
+          {outlookStatus && <p>{outlookStatus}</p>}
+          <button className="primary-button" type="submit" disabled={busy}>
+            {busy ? "Importing…" : "Find knowledge"}
+          </button>
+        </form>
+
         <form className="admin-form" onSubmit={save}>
           <div className="section-heading">
             <h2>{editingId ? "Edit knowledge" : "Add knowledge"}</h2>
@@ -213,6 +274,12 @@ export function AdminShell({ initialEntries }: { initialEntries: KnowledgeEntry[
                     </button>
                   </div>
                 </div>
+                {entry.sourceType === "outlook" && entry.sourceLabel && (
+                  <p>
+                    <strong>Imported from Outlook:</strong> {entry.sourceLabel}
+                    {entry.sourceDate ? ` (${entry.sourceDate})` : ""}
+                  </p>
+                )}
                 <p>{entry.content}</p>
               </article>
             ))}
