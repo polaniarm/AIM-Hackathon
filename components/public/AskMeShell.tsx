@@ -11,7 +11,7 @@ const suggestedQuestions = [
 type AskResponse = {
   answer: string;
   sources: Array<{ id: string; title: string }>;
-  mode: "openai" | "mock" | "insufficient";
+  mode: "codex" | "mock" | "insufficient";
   model: string | null;
 };
 
@@ -102,7 +102,7 @@ export function AskMeShell() {
           <div className="answer-heading">
             <h2>Answer</h2>
             {result?.mode === "mock" && <span className="mode-badge">Development mock</span>}
-            {result?.mode === "openai" && <span className="mode-badge">AI grounded</span>}
+            {result?.mode === "codex" && <span className="mode-badge">Codex grounded</span>}
           </div>
           {loading && <p className="answer-placeholder">Finding relevant published knowledge…</p>}
           {error && <p className="error-message">{error}</p>}

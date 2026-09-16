@@ -1,27 +1,26 @@
 # Ask Me
 
-Ask Me is a Phase 0 web application for asking grounded questions about professional work, projects, demos, and technical interests. It includes a public question-and-answer experience and a protected single-administrator knowledge workspace.
+Ask Me is a local hackathon application for asking grounded questions about professional work, projects, demos, and technical interests. It provides a public question-and-answer experience at `/` and a protected single-administrator knowledge workspace at `/admin`.
 
-All included professional knowledge is clearly labeled sample portfolio content. Replace it with reviewed material before presenting it as factual biography.
+All included professional knowledge is labeled sample portfolio content. Replace it with reviewed material before presenting it as factual biography.
 
 ## Stack
 
 - Next.js 16 App Router, React, and TypeScript
-- Next.js Route Handlers for public and protected server APIs
-- Direct OpenAI Responses API integration—no AI framework
-- Seed-backed process-local knowledge store—no database
+- Official TypeScript Codex SDK for local, server-side inference
+- Seed-backed process-local knowledge store
 - HMAC-signed, HttpOnly single-admin session cookie
 - Deterministic token-overlap retrieval
 
-## Architecture and privacy boundary
+## Runtime architecture
 
 ```text
-Public question
+Local browser
   → POST /api/ask
   → getPublishedKnowledge()
   → deterministic retrieval (maximum 3 entries)
   → bounded context (maximum 6,000 characters)
-  → server-side OpenAI or explicit development mock
+  → local Codex SDK thread
   → grounded answer + published source titles
 
 Authenticated admin
@@ -30,56 +29,69 @@ Authenticated admin
   → create / edit / publish / unpublish / delete
 ```
 
-The public answer path begins with `getPublishedKnowledge()` and there is no public endpoint for listing knowledge. Retrieval filters publication state again, and the bounded-context builder performs a third publication check. The seed includes one unpublished sentinel entry that tests this invariant end to end.
+The public path starts with `getPublishedKnowledge()`. Retrieval checks publication state again, and the context builder performs a third publication check. Codex receives only that bounded context and the visitor's question. There is no public knowledge-list endpoint.
 
-Outlook is intentionally absent. A future flow may ingest Outlook through a private admin process, curate that material, and explicitly publish selected knowledge. Public questions must never access Outlook or other private source systems directly.
+Codex runs from an isolated temporary working directory with a read-only sandbox, no approval prompts, disabled web/network access for tools, and no configured MCP servers. The prompt prohibits tools and external sources; the application rejects any turn that reports command, file, MCP, or web-search activity.
 
-## Knowledge model and storage
+Outlook is intentionally absent. Future Outlook ingestion belongs behind authenticated private/admin services, and imported material must remain unpublished until deliberately reviewed and published.
 
-Each entry has an ID, title, content, source type, publication state, and creation/update timestamps. Five distinct sample entries are published; one private sample remains unpublished.
+## Local prerequisites
 
-The knowledge store intentionally initializes from source-controlled seed data and holds admin mutations in process memory. This keeps the demo dependency-free and local CRUD reliable within one running server. Mutations reset when the server restarts and are not shared between serverless instances; the admin UI displays this limitation. Before production deployment, replace the repository implementation with a durable shared store without changing the public `getPublishedKnowledge()` boundary.
+- Node.js 18 or later
+- npm
+- A working local Codex login on the demo machine
 
-## Retrieval and answering
+Verify authentication before the demo:
 
-Retrieval lowercases, tokenizes, removes common words, applies very small plural/verb stemming, weights title overlap above content overlap, and returns at most three published entries. No embeddings or vector database are used. If nothing matches, the API returns an insufficient-knowledge response before any model call.
+```bash
+codex --version
+codex login status
+```
 
-With `ASK_ME_LLM_MODE=openai`, the server calls the OpenAI Responses API using only the question and bounded published context and requests `store: false`. With `ASK_ME_LLM_MODE=mock`, it returns an explicitly labeled deterministic development answer. If mode is omitted, the server selects OpenAI only when a key exists; provider failures never silently fall back to mock and public errors omit provider details. Invalid mode values fail closed. Automated tests explicitly use mock mode and never call an external model.
+If needed, run `codex login` and complete the ChatGPT/Codex browser login. The application reuses local Codex authentication; do not copy authentication tokens into `.env.local`.
 
-## Admin authentication
+## Canonical demo startup
 
-`/admin` redirects anonymous visitors to `/admin/login`. A correct `ASK_ME_ADMIN_SECRET` of at least 16 characters creates an eight-hour HMAC-SHA256-signed, HttpOnly, SameSite=Strict cookie. The cookie is `Secure` in production and cleared on logout. Every admin knowledge API independently verifies its signature and expiration; hiding the UI is not treated as authorization. Use HTTPS in deployment and choose a long random secret.
+```bash
+git clone https://github.com/polaniarm/AIM-Hackathon.git
+cd AIM-Hackathon
+npm install
+cp .env.example .env.local
+# Replace ASK_ME_ADMIN_SECRET with a random value of at least 16 characters.
+npm run build
+npm start
+```
+
+Open:
+
+- Public Ask Me: `http://localhost:3000`
+- Private admin: `http://localhost:3000/admin`
+
+Keep the Node process running for the whole demo. Restarting it restores the seeded knowledge and discards admin mutations.
 
 ## Environment
 
-```bash
-cp .env.example .env.local
-```
+The only required application environment variable is:
 
 ```text
-OPENAI_API_KEY        Server-side OpenAI credential; never NEXT_PUBLIC_
-OPENAI_MODEL          Model ID; defaults to gpt-5-mini
-ASK_ME_LLM_MODE       openai or mock
-ASK_ME_ADMIN_SECRET   Long random single-admin secret
+ASK_ME_ADMIN_SECRET   Random single-admin secret, minimum 16 characters
 ```
 
-Do not commit `.env.local` or real credentials.
+Codex is the default inference mode and uses the machine's local Codex authentication. Automated tests explicitly set `ASK_ME_INFERENCE_MODE=mock`; mock answers are visibly labeled and the application never silently falls back to them.
 
-## Run and verify
+## Knowledge, retrieval, and persistence
 
-```bash
-npm install
-npm run dev
-```
+Each entry has an ID, title, content, source type, publication state, and creation/update timestamps. Five sample entries are published and one sentinel entry is unpublished.
 
-Open `http://localhost:3000` for Ask Me and `http://localhost:3000/admin` for administration.
+Retrieval lowercases and tokenizes text, removes common words, performs small plural/verb stemming, weights title overlap above content overlap, and returns at most three published entries. An unrelated question returns the insufficient-information response before inference.
 
-For a production-mode local run:
+Admin mutations remain in the single Node process for its lifetime. They reset on restart. This behavior is intentional for the local Phase 0 demo and is prominently disclosed in `/admin`.
 
-```bash
-npm run build
-npm run start
-```
+## Admin authentication
+
+`/admin` redirects anonymous visitors to `/admin/login`. A correct server-side secret creates an eight-hour HMAC-SHA256-signed, HttpOnly, SameSite=Strict cookie. Every admin API verifies its signature and expiry independently. Logout clears the effective browser cookie.
+
+## Verification
 
 ```bash
 npm run typecheck
@@ -88,25 +100,20 @@ npm test
 npm run build
 ```
 
-## Deployment
+Tests use explicit deterministic mock inference and do not consume a live Codex turn. The local demo uses Codex by default.
 
-The application is ready for a standard Next.js deployment. Vercel requires no repository-specific adapter:
+## Troubleshooting
 
-```bash
-npx vercel
-npx vercel --prod
-```
+- `502 answer_failed`: run `codex login status`, confirm local authentication, and confirm the demo machine can reach Codex.
+- Codex timeout: retry once and confirm no other long-running Codex task is consuming the local session.
+- Admin access disabled: set `ASK_ME_ADMIN_SECRET` to at least 16 characters and restart the app.
+- Admin changes disappeared: the process restarted; this is expected process-local behavior.
+- Mock badge visible during a demo: remove `ASK_ME_INFERENCE_MODE=mock` and restart so the default Codex mode is used.
 
-Configure `ASK_ME_ADMIN_SECRET`, `ASK_ME_LLM_MODE=openai`, `OPENAI_API_KEY`, and optionally `OPENAI_MODEL` as server-side environment variables in the deployment project. Do not expose them with `NEXT_PUBLIC_` names.
-
-Vercel is suitable for the seeded public experience, but process-local admin mutations can reset or differ between serverless instances. For a mutation-focused live demo, use one long-lived Node instance, run `npm run build` followed by `npm run start`, and keep that instance alive for the session. This preserves the intentionally database-free Phase 0 architecture.
-
-Phase 1 should add Outlook ingestion only behind authenticated private/admin services. Ingested records must be curated into the existing knowledge model and explicitly published before the public answering path can retrieve them.
-
-## Phase 0 limitations
+## Known Phase 0 limitations
 
 - Admin mutations are process-local and non-durable.
-- Sample knowledge is placeholder content, not verified biography.
+- Knowledge is sample content, not verified biography.
 - Authentication is intentionally single-admin and secret-based.
 - No rate limiting, conversation history, analytics, document ingestion, Outlook integration, embeddings, or vector search exists.
-- The UI supports one question and answer at a time.
+- Codex is used as a bounded local inference step, not as an autonomous tool-using agent.

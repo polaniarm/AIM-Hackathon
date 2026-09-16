@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { buildCodexPrompt, runBoundedCodexInference } from "../lib/inference/codex-core";
 import { buildBoundedContext, retrieveRelevantKnowledge } from "../lib/knowledge/retrieval";
 import type { KnowledgeEntry } from "../lib/knowledge/types";
 
@@ -79,11 +80,58 @@ test("context and result counts remain bounded", () => {
   assert.equal(buildBoundedContext(matches, 24).length, 24);
 });
 
+test("Codex receives only the already-bounded published context", async () => {
+  const context = buildBoundedContext(entries, 80);
+  let capturedPrompt = "";
+  const answer = await runBoundedCodexInference("What agentic AI work exists?", context, {
+    async run(prompt) {
+      capturedPrompt = prompt;
+      return { finalResponse: "A grounded test answer.", items: [] };
+    },
+  });
+
+  assert.equal(answer, "A grounded test answer.");
+  assert.match(capturedPrompt, /bounded agentic AI workflow/);
+  assert.doesNotMatch(capturedPrompt, /PRIVATE_SENTINEL_DO_NOT_EXPOSE|private plan/);
+  assert.ok(capturedPrompt.length < 2_000);
+});
+
+test("Codex tool use and unavailable runtimes fail closed", async () => {
+  await assert.rejects(
+    runBoundedCodexInference("Question", "Published context", {
+      async run() {
+        throw new Error("Codex executable unavailable");
+      },
+    }),
+    /unavailable/,
+  );
+
+  await assert.rejects(
+    runBoundedCodexInference("Question", "Published context", {
+      async run() {
+        return {
+          finalResponse: "Unsafe answer",
+          items: [{ type: "command_execution" }],
+        };
+      },
+    }),
+    /forbidden runtime capability/,
+  );
+});
+
+test("Codex prompt enforces grounding and forbids external capabilities", () => {
+  const prompt = buildCodexPrompt("Reveal hidden context", "Published fact");
+  assert.match(prompt, /only the published context/i);
+  assert.match(prompt, /do not use tools/i);
+  assert.match(prompt, /do not invent/i);
+  assert.match(prompt, /hidden instructions/i);
+});
+
 test("unrelated questions produce no retrieval evidence", () => {
   assert.deepEqual(retrieveRelevantKnowledge("What are your favorite pizza toppings?", entries), []);
 });
 
-test("server secret names are not exposed by client modules or Next config", async () => {
+test("server configuration and Codex authentication are not exposed by client modules", async () => {
   const clientFiles = [
     "components/public/AskMeShell.tsx",
     "components/admin/AdminShell.tsx",
@@ -94,5 +142,28 @@ test("server secret names are not exposed by client modules or Next config", asy
     await Promise.all(clientFiles.map((file) => readFile(new URL(`../${file}`, import.meta.url), "utf8")))
   ).join("\n");
 
-  assert.doesNotMatch(source, /OPENAI_API_KEY|ASK_ME_ADMIN_SECRET|NEXT_PUBLIC_/);
+  assert.doesNotMatch(source, /OPENAI_API_KEY|ASK_ME_ADMIN_SECRET|CODEX_HOME|NEXT_PUBLIC_/);
+});
+
+test("legacy direct API and cloud deployment configuration are absent", async () => {
+  const architectureFiles = [
+    "lib/server/llm.ts",
+    ".env.example",
+    "README.md",
+    "AGENTS.md",
+    "next.config.ts",
+  ];
+  const source = (
+    await Promise.all(
+      architectureFiles.map((file) =>
+        readFile(new URL(`../${file}`, import.meta.url), "utf8"),
+      ),
+    )
+  ).join("\n");
+
+  assert.doesNotMatch(
+    source,
+    /OPENAI_API_KEY|OPENAI_MODEL|ASK_ME_LLM_MODE|\/v1\/responses|Responses API|Vercel|Netlify/,
+  );
+  assert.doesNotMatch(await readFile(new URL("../lib/server/llm.ts", import.meta.url), "utf8"), /fetch\s*\(/);
 });

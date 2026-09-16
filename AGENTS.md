@@ -9,10 +9,12 @@
 - Prefer small, typed modules and the lowest practical dependency count.
 - Preserve the structural `getPublishedKnowledge()` boundary before public retrieval and context building.
 - Protect every admin page, route handler, server action, and data access—not only the visible UI.
-- Keep automated tests in explicit mock LLM mode; never require an external API call in CI.
-- Never silently fall back from a configured real provider to mock behavior; mock mode must remain visible.
+- Use the server-only Codex SDK adapter for inference; do not add a direct model API client or separate API-key requirement.
+- Keep automated tests in explicit mock inference mode; never require a live Codex turn in CI.
+- Never silently fall back from Codex to mock behavior; mock mode must remain visible.
 - Treat seed entries as sample content and keep the unpublished sentinel private.
-- The current store is intentionally process-local and the admin UI must say so; replace it deliberately with shared durable storage before production mutation.
+- The canonical Phase 0 runtime is one local, long-lived Node process; cloud deployment is not required.
+- The current store is intentionally process-local and the admin UI must say so.
 - Run `npm run typecheck`, `npm run lint`, `npm test`, and `npm run build` after relevant changes.
 
 <!-- BEGIN:nextjs-agent-rules -->

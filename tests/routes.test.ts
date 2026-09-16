@@ -61,8 +61,7 @@ test("Ask Me complete vertical slice", async (t) => {
       env: {
         ...process.env,
         ASK_ME_ADMIN_SECRET: adminSecret,
-        ASK_ME_LLM_MODE: "mock",
-        OPENAI_API_KEY: "",
+        ASK_ME_INFERENCE_MODE: "mock",
       },
     },
   );
@@ -395,6 +394,50 @@ test("Ask Me complete vertical slice", async (t) => {
       });
       assert.equal(api.status, 401);
     });
+  } finally {
+    await stopApplication(application);
+  }
+});
+
+test("unavailable or invalid Codex configuration fails with a generic public error", async () => {
+  const port = await getAvailablePort();
+  const origin = `http://127.0.0.1:${port}`;
+  const nextBinary = fileURLToPath(new URL("../node_modules/next/dist/bin/next", import.meta.url));
+  const output: string[] = [];
+  const application = spawn(
+    process.execPath,
+    [nextBinary, "dev", "--hostname", "127.0.0.1", "--port", String(port)],
+    {
+      stdio: ["ignore", "pipe", "pipe"],
+      env: {
+        ...process.env,
+        ASK_ME_ADMIN_SECRET: "integration-test-admin-secret",
+        ASK_ME_INFERENCE_MODE: "invalid-test-mode",
+      },
+    },
+  );
+
+  application.stdout?.on("data", (chunk) => output.push(chunk.toString()));
+  application.stderr?.on("data", (chunk) => output.push(chunk.toString()));
+
+  try {
+    await waitForServer(`${origin}/api/health`, output);
+    const response = await fetch(`${origin}/api/ask`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question: "What have you built with agentic AI?" }),
+    });
+    const payload = await response.json();
+
+    assert.equal(response.status, 502);
+    assert.deepEqual(payload, {
+      error: {
+        code: "answer_failed",
+        message: "The answer service is temporarily unavailable.",
+      },
+    });
+    assert.doesNotMatch(JSON.stringify(payload), /invalid-test-mode|Codex|SDK/i);
+    assert.equal(response.headers.get("cache-control"), "no-store");
   } finally {
     await stopApplication(application);
   }
