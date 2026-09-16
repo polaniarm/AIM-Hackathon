@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Next.js build output
+.next/
+out/
+
+# Local environment files (the example remains committed)
+.env*
+!.env.example
+
+# Test and tooling output
+coverage/
+*.tsbuildinfo
+*.log
+
+# Editors and operating systems
+.DS_Store
+.idea/
+.vscode/
+
+# Deployment tooling
+.vercel/

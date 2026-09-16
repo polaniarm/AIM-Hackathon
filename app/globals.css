@@ -1,0 +1,443 @@
+:root {
+  color: #162033;
+  background: #f5f7fb;
+  font-family: Arial, Helvetica, sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled,
+input:disabled {
+  cursor: not-allowed;
+}
+
+.public-shell {
+  min-height: 100vh;
+  padding: 4rem 1.25rem;
+  background:
+    radial-gradient(circle at top left, #dcecff 0, transparent 32rem),
+    #f5f7fb;
+}
+
+.hero {
+  width: min(100%, 760px);
+  margin: 0 auto;
+}
+
+.eyebrow {
+  margin: 0 0 0.8rem;
+  color: #2563eb;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+h3,
+p {
+  overflow-wrap: anywhere;
+}
+
+h1 {
+  margin: 0;
+  color: #111827;
+  font-size: clamp(3rem, 11vw, 6rem);
+  letter-spacing: -0.06em;
+  line-height: 0.95;
+}
+
+.intro {
+  max-width: 620px;
+  margin: 1.25rem 0 2rem;
+  color: #526078;
+  font-size: clamp(1.05rem, 2.5vw, 1.3rem);
+  line-height: 1.6;
+}
+
+.question-box,
+.answer-panel,
+.admin-form,
+.knowledge-card,
+.login-card {
+  border: 1px solid #d9e0ec;
+  border-radius: 20px;
+  background: rgb(255 255 255 / 92%);
+  box-shadow: 0 20px 50px rgb(30 64 175 / 9%);
+}
+
+.question-box,
+.answer-panel {
+  padding: 1.25rem;
+}
+
+.question-box label,
+.admin-form label,
+.login-card label {
+  display: grid;
+  gap: 0.45rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.question-row {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+input,
+textarea {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  color: #162033;
+  background: #f8fafc;
+}
+
+input:focus,
+textarea:focus {
+  border-color: #2563eb;
+  outline: 3px solid rgb(37 99 235 / 12%);
+}
+
+.question-row input {
+  min-width: 0;
+  flex: 1;
+}
+
+.question-row button,
+.primary-button {
+  border: 0;
+  border-radius: 12px;
+  padding: 0.9rem 1.4rem;
+  color: white;
+  background: #2563eb;
+  font-weight: 700;
+}
+
+.question-row button:disabled,
+.primary-button:disabled {
+  opacity: 0.55;
+}
+
+.helper {
+  margin: 0.75rem 0 0;
+  color: #7b879b;
+  font-size: 0.85rem;
+}
+
+.suggestions {
+  margin-top: 2rem;
+}
+
+.suggestions h2,
+.answer-heading h2 {
+  margin: 0;
+  font-size: 0.9rem;
+  letter-spacing: 0.04em;
+}
+
+.suggestion-list {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 0.8rem;
+}
+
+.suggestion-list button {
+  border: 0;
+  border-left: 3px solid #93b4ee;
+  padding: 0.6rem 0.9rem;
+  color: #43516a;
+  background: transparent;
+  text-align: left;
+}
+
+.suggestion-list button:hover:not(:disabled) {
+  border-left-color: #2563eb;
+  color: #1d4ed8;
+}
+
+.answer-panel {
+  min-height: 150px;
+  margin-top: 2rem;
+}
+
+.answer-heading,
+.section-heading,
+.knowledge-card-heading,
+.admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.mode-badge,
+.status,
+.source-type {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.mode-badge {
+  color: #1d4ed8;
+  background: #dbeafe;
+}
+
+.answer-placeholder {
+  color: #7b879b;
+}
+
+.answer-content > p {
+  white-space: pre-wrap;
+  color: #334155;
+  line-height: 1.65;
+}
+
+.answer-sources {
+  border-top: 1px solid #e2e8f0;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  font-size: 0.82rem;
+}
+
+.answer-sources ul {
+  margin: 0.45rem 0 0;
+  padding-left: 1.1rem;
+  color: #64748b;
+}
+
+.error-message,
+.configuration-warning {
+  border-radius: 10px;
+  padding: 0.75rem;
+  color: #991b1b;
+  background: #fee2e2;
+  font-size: 0.9rem;
+}
+
+.admin-shell,
+.login-shell {
+  min-height: 100vh;
+  padding: 3rem 1.25rem;
+  background: #111827;
+}
+
+.admin-container {
+  width: min(100%, 1000px);
+  margin: 0 auto;
+}
+
+.admin-header {
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  color: #cbd5e1;
+}
+
+.admin-header h1,
+.login-card h1 {
+  color: white;
+  font-size: clamp(2.5rem, 7vw, 4.5rem);
+}
+
+.admin-header > div > p:last-child {
+  margin-bottom: 0;
+  color: #94a3b8;
+}
+
+.persistence-notice {
+  margin: -0.75rem 0 1.5rem;
+  border: 1px solid #92400e;
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  color: #fde68a;
+  background: #451a03;
+  font-size: 0.9rem;
+}
+
+.secondary-button,
+.card-actions button,
+.text-button {
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  padding: 0.55rem 0.75rem;
+  color: #334155;
+  background: white;
+}
+
+.admin-header .secondary-button {
+  border-color: #475569;
+  color: white;
+  background: #1e293b;
+}
+
+.admin-form {
+  display: grid;
+  gap: 1rem;
+  padding: 1.5rem;
+}
+
+.admin-form h2,
+.knowledge-section h2 {
+  margin: 0;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: end;
+  gap: 1rem;
+}
+
+.checkbox-label {
+  display: flex !important;
+  flex-direction: row;
+  align-items: center;
+  padding-bottom: 0.9rem;
+}
+
+.checkbox-label input {
+  width: auto;
+}
+
+.primary-button {
+  justify-self: start;
+}
+
+.text-button {
+  border: 0;
+  color: #2563eb;
+}
+
+.knowledge-section {
+  margin-top: 2.5rem;
+}
+
+.knowledge-section > .section-heading {
+  color: white;
+}
+
+.knowledge-section > .section-heading span {
+  color: #94a3b8;
+}
+
+.knowledge-list {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.knowledge-card {
+  padding: 1.25rem;
+}
+
+.knowledge-card-heading {
+  align-items: flex-start;
+}
+
+.knowledge-card h3 {
+  margin: 0.75rem 0 0;
+}
+
+.knowledge-card > p {
+  margin-bottom: 0;
+  color: #526078;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.status.published {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.status.private {
+  color: #9a3412;
+  background: #ffedd5;
+}
+
+.source-type {
+  margin-left: 0.4rem;
+  color: #475569;
+  background: #e2e8f0;
+}
+
+.card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+.card-actions button:last-child {
+  color: #b91c1c;
+}
+
+.login-shell {
+  display: grid;
+  place-items: center;
+}
+
+.login-card {
+  display: grid;
+  gap: 1rem;
+  width: min(100%, 480px);
+  padding: 2rem;
+}
+
+.login-card h1 {
+  color: #111827;
+  font-size: clamp(2.5rem, 10vw, 4rem);
+}
+
+.login-card > p:not(.eyebrow, .error-message, .configuration-warning) {
+  margin: 0;
+  color: #64748b;
+}
+
+@media (max-width: 700px) {
+  .public-shell,
+  .admin-shell,
+  .login-shell {
+    padding: 2.5rem 1rem;
+  }
+
+  .question-row,
+  .admin-header,
+  .knowledge-card-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .card-actions {
+    justify-content: flex-start;
+  }
+}
